@@ -1,0 +1,25 @@
+[debug] [2025-03-31T21:51:19.569Z] ----------------------------------------------------------------------
+[debug] [2025-03-31T21:51:19.571Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\Bodyb\AppData\Roaming\npm\node_modules\firebase-tools\lib\bin\firebase.js init functions
+[debug] [2025-03-31T21:51:19.572Z] CLI Version:   14.0.1
+[debug] [2025-03-31T21:51:19.572Z] Platform:      win32
+[debug] [2025-03-31T21:51:19.572Z] Node Version:  v22.12.0
+[debug] [2025-03-31T21:51:19.572Z] Time:          Mon Mar 31 2025 17:51:19 GMT-0400 (Eastern Daylight Time)
+[debug] [2025-03-31T21:51:19.572Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2025-03-31T21:51:19.578Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2025-03-31T21:51:19.578Z] > authorizing via signed-in user (bodybuildingfly@gmail.com)
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  C:\Development\HabitTrackerApp
+
+Before we get started, keep in mind:
+
+  * You are currently outside your home directory
+
