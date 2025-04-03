@@ -20,6 +20,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -95,7 +96,10 @@ val homeScreens = listOf(
     HomeScreen(
         icon = Icons.Filled.Home,
         route = "Habits",
-        screen = { HabitsList(onHabitClick = {})},
+        screen = { HabitsList(
+            onHabitClick = {},
+            habitViewModel = viewModel()
+        )},
         badgeAmount = null
     ),
     HomeScreen(

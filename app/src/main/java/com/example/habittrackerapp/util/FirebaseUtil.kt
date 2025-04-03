@@ -2,15 +2,14 @@ package com.example.habittrackerapp.util
 
 import android.util.Log
 import com.example.habittrackerapp.model.data.Habit
-import com.example.habittrackerapp.model.data.Message
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.MutableData
-import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
+import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
 
 object FirebaseUtil {
@@ -64,40 +63,6 @@ object FirebaseUtil {
     }
 
     /**
-     * Write data to a specific path in the database using a transaction
-     */
-    fun writeDataWithTransaction(
-        path: String,
-        data: Any,
-        onSuccess: () -> Unit,
-        onFailure: (Exception) -> Unit
-    ) {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid ?: return
-        val ref = getDatabaseRef(path)
-
-        ref.runTransaction(object : Transaction.Handler {
-            override fun doTransaction(mutableData: MutableData): Transaction.Result {
-                val dataMap = mutableData.value as? MutableMap<String, Any> ?: mutableMapOf()
-                dataMap["data"] = data
-                dataMap["updatedBy"] = currentUserId
-                dataMap["timestamp"] = System.currentTimeMillis()
-                mutableData.value = dataMap
-                return Transaction.success(mutableData)
-            }
-
-            override fun onComplete(
-                databaseError: DatabaseError?, committed: Boolean, dataSnapshot: DataSnapshot?
-            ) {
-                if (databaseError != null) {
-                    onFailure(databaseError.toException())
-                } else {
-                    onSuccess()
-                }
-            }
-        })
-    }
-
-    /**
      * Read data from a specific path in the database
      */
     fun readData(path: String, onDataReceived: (DataSnapshot) -> Unit, onFailure: (DatabaseError) -> Unit) {
@@ -108,40 +73,6 @@ object FirebaseUtil {
 
             override fun onCancelled(error: DatabaseError) {
                 onFailure(error)
-            }
-        })
-    }
-
-    /**
-     * Listen for real-time updates at a specific path
-     */
-    fun listenForUpdates(path: String, onDataChanged: (DataSnapshot) -> Unit) {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-        val ref = getDatabaseRef(path)
-
-        var isInitialLoad = true // Flag to track first-time load
-
-        ref.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                if (isInitialLoad) {
-                    isInitialLoad = false
-                    return // Skip initial load
-                }
-
-                // Extract the 'updatedBy' field to check who made the change
-                val updatedBy = snapshot.child("updatedBy").getValue(String::class.java)
-
-                // Ignore notifications if the update was made by the current user
-                if (updatedBy == currentUserId) {
-                    return
-                }
-
-                // Proceed with handling the data change
-                onDataChanged(snapshot)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Handle error
             }
         })
     }
@@ -181,26 +112,6 @@ object FirebaseUtil {
             })
         }
     }
-
-    // Function to fetch messages
-    fun getMessages(onDataReceived: (List<Message>) -> Unit) {
-        database.getReference("messages").orderByChild("timestamp").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val messages = snapshot.children.mapNotNull { it.getValue(Message::class.java) }
-                onDataReceived(messages)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("FirebaseUtil", "Error fetching messages", error.toException())
-            }
-        })
-    }
-
-    // Function to add a new message
-    fun addMessage(message: Message, onComplete: (Boolean) -> Unit) {
-        database.getReference("messages").push().setValue(message)
-    }
-
 
     // Function to fetch habits
     fun getHabits(onDataReceived: (List<Habit>) -> Unit) {
@@ -267,15 +178,29 @@ object FirebaseUtil {
                     Log.d("FCM Token", "Token: $token")
 
                     // Save the token in Firebase under the user's profile
-                    val userId = FirebaseAuth.getInstance().currentUser?.uid
-                    userId?.let {
-                        FirebaseDatabase.getInstance().getReference("users/$userId/token")
-                            .setValue(token)
-                    }
+                    saveTokenToFirestore(token)
                 } else {
                     Log.w("FCM Token", "Fetching FCM token failed", task.exception)
                 }
             }
+    }
+
+    fun saveTokenToFirestore(token: String) {
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        currentUser?.let { user ->
+            val userId = user.uid
+            val db = FirebaseFirestore.getInstance()
+
+            val userRef = db.collection("users").document(userId)
+
+            userRef.set(mapOf("token" to token), SetOptions.merge())
+                .addOnSuccessListener {
+                    Log.d("FirestoreUtil", "Token saved successfully")
+                }
+                .addOnFailureListener { e ->
+                    Log.e("FirestoreUtil", "Error saving token", e)
+                }
+        }
     }
 }
 

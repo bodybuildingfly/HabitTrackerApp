@@ -8,8 +8,6 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.example.habittrackerapp.MainActivity
 import com.example.habittrackerapp.R
-import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import kotlin.random.Random
@@ -95,15 +93,6 @@ class MessagingUtil : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         super.onNewToken(token)
-        saveTokenToFirebase(token)  // Save or update the token in Firebase
-    }
-
-    private fun saveTokenToFirebase(token: String) {
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        currentUser?.let {
-            val userId = it.uid
-            val databaseRef = FirebaseDatabase.getInstance().getReference("users/$userId/token")
-            databaseRef.setValue(token)
-        }
+        FirebaseUtil.saveTokenToFirestore(token) // Save or update the token in Firestore
     }
 }

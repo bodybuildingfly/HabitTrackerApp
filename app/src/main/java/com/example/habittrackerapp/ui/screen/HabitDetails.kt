@@ -1,12 +1,9 @@
 package com.example.habittrackerapp.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -21,7 +18,6 @@ import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Pause
 import androidx.compose.material3.CenterAlignedTopAppBar
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,7 +31,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -45,13 +40,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.example.habittrackerapp.components.MenuItem
 import com.example.habittrackerapp.model.data.Habit
-import com.example.habittrackerapp.util.FirebaseUtil
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitDetails(
-    modifier: Modifier = Modifier,
-    habitId: String,
+    modifier: Modifier,
+    habit: Habit,
+    onCounterChange: (Int) -> Unit,
     onClose: () -> Unit,
     onReminder: () -> Unit,
     onViewHistory: () -> Unit,
@@ -59,32 +55,13 @@ fun HabitDetails(
     onEdit: () -> Unit,
     onDelete: () -> Unit
 ) {
-    val habit = remember { mutableStateOf(Habit(), neverEqualPolicy()) }
-    var isLoading by remember { mutableStateOf(true) }
+    var habit by remember { mutableStateOf(habit) }
     var counter by remember { mutableIntStateOf(0) }
-
-    Log.d("HabitDetails", "Recomposing with habit: $habitId")
-
-    // Load habit data once when habitId changes
-    LaunchedEffect(habitId) {
-        FirebaseUtil.readData("habits/$habitId",
-            onDataReceived = {
-                habit.value = it.getValue(Habit::class.java) ?: Habit()
-                counter = habit.value.timesCompleted
-                isLoading = false
-            },
-            onFailure = {
-                Log.e("HabitDetails", "Error reading data", it.toException())
-            }
-        )
-    }
 
     // Update counter in database when it changes
     LaunchedEffect(counter) {
-        FirebaseUtil.writeData("habits/$habitId/timesCompleted", counter,
-            onSuccess = { /* Success, no action needed */ },
-            onFailure = { Log.e("EditNotes", "Error writing data", it) }
-        )
+        delay(1000) // Delay to avoid updating too frequently
+        onCounterChange(counter)
     }
 
     Scaffold(
@@ -108,49 +85,40 @@ fun HabitDetails(
             )
         }
     ) { paddingValues ->
-        if (isLoading) {
-            // Show loading indicator
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
+        Column(
+            modifier = modifier
+                .padding(horizontal = 24.dp)
+                .padding(paddingValues)
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceEvenly
             ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(paddingValues)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceEvenly
-                ) {
-                    Text(
-                        modifier = Modifier.weight(.65F),
-                        text = habit.value.name,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.titleLarge
-                    )
-                    CounterSection(
-                        counter, habit.value.timesToComplete
-                    ) { newCount ->
-                        counter = newCount
-                    }
+                Text(
+                    modifier = Modifier.weight(.65F),
+                    text = habit.name,
+                    fontWeight = FontWeight.Bold,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                CounterSection(
+                    counter = counter,
+                    maxCount = habit.timesToComplete
+                ) { newCount ->
+                    counter = newCount
                 }
-                Text(
-                    text = habit.value.description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    text = "This habit must be done at least once every day.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
             }
+            Text(
+                text = habit.description,
+                style = MaterialTheme.typography.bodyMedium
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = "This habit must be done at least once every day.",
+                style = MaterialTheme.typography.bodyMedium
+            )
         }
     }
 }

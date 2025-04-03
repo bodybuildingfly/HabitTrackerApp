@@ -5,11 +5,16 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -45,7 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.habittrackerapp.components.ExecuteOnKeyboardOpen
 import com.example.habittrackerapp.model.data.Message
-import com.example.habittrackerapp.util.FirebaseUtil
+import com.example.habittrackerapp.util.FirestoreUtil
 import com.google.firebase.auth.FirebaseAuth
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -68,7 +73,9 @@ fun ChatScreen(
     // Fetch messages from Firebase
     LaunchedEffect(Unit) {
         Log.d("ChatScreen", "Fetching messages...")
-        FirebaseUtil.getMessages { messagesList ->
+
+        FirestoreUtil.getMessages { messagesList ->
+            Log.d("ChatScreen", "Messages fetched: $messagesList")
             messages = messagesList
 
             coroutineScope.launch {
@@ -128,7 +135,10 @@ fun ChatScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
+                .consumeWindowInsets(paddingValues) // Consume the padding
                 .navigationBarsPadding() // Keeps the bottom of the column above the navigation bar
+                .windowInsetsPadding(WindowInsets.ime) // Keep the top bar in place when keyboard opens
+                .imePadding() // Keeps the content going all the way to the bottom of the available screen
         ) {
             if (isLoading) {
                 // Show loading indicator until scrolling is completed
@@ -176,9 +186,9 @@ fun ChatScreen(
                                 val messageData = Message(
                                     messageText.text,
                                     currentUser?.uid ?: "",
-                                    System.currentTimeMillis().toString()
+                                    System.currentTimeMillis()
                                 )
-                                FirebaseUtil.addMessage(messageData, onComplete = {})
+                                FirestoreUtil.addMessage(messageData, onComplete = {})
                                 messageText = TextFieldValue("")
                             }
                         }
@@ -223,7 +233,7 @@ fun MessageItem(message: Message, isCurrentUser: Boolean) {
         }
         Text(
             modifier = Modifier.align(alignment),
-            text = convertTimestamp(message.timestamp)
+            text = convertTimestamp(message.timestamp.toString())
                 .toString(),
             fontSize = 12.sp
         )

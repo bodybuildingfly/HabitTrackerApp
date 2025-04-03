@@ -24,7 +24,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.habittrackerapp.components.RichTextStyleRow
-import com.example.habittrackerapp.util.FirebaseUtil
+import com.example.habittrackerapp.util.FirestoreUtil
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 
@@ -38,10 +38,10 @@ fun EditNotes(
     val outlinedRichTextState = rememberRichTextState()
     val tabTitle = tab.replaceFirstChar { it.uppercase() }
 
-    FirebaseUtil.readData("notes/${tab}", {
-        outlinedRichTextState.setHtml(it.child("data").value.toString())
-    }, {
-        Log.e("EditNotes", "Error reading data", it.toException())
+    FirestoreUtil.readData("notes", tab, { document ->
+        outlinedRichTextState.setHtml(document.getString("data") ?: "")
+    }, { exception ->
+        Log.e("EditNotes", "Error reading data", exception)
     })
 
     Scaffold(
@@ -60,7 +60,7 @@ fun EditNotes(
                 },
                 actions = {
                     IconButton(onClick = {
-                        FirebaseUtil.writeDataWithTransaction("notes/${tab}", outlinedRichTextState.toHtml(), {
+                        FirestoreUtil.writeDataWithTransaction("notes", tab, outlinedRichTextState.toHtml(), {
                             onClose()
                         }, {
                             Log.e("EditNotes", "Error writing data", it)

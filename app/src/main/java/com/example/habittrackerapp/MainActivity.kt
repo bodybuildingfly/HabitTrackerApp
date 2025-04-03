@@ -1,6 +1,7 @@
 package com.example.habittrackerapp
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -10,6 +11,7 @@ import com.example.habittrackerapp.ui.theme.HabitTrackerAppTheme
 import com.example.habittrackerapp.util.FirebaseUtil
 import com.example.habittrackerapp.util.PermissionUtil
 
+
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -18,6 +20,7 @@ class MainActivity : ComponentActivity() {
             HabitTrackerAppTheme {
                 // Get the click action from the intent (Typically passed by the notification)
                 val clickAction = intent?.getStringExtra("click_action")
+                Log.d("MainActivity", "Click Action: $clickAction")
 
                 // Request notification permission
                 val context = LocalContext.current

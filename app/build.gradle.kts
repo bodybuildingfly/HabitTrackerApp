@@ -54,14 +54,9 @@ dependencies {
 
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.firebase.messaging)
-    implementation(libs.firebase.functions)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -71,11 +66,14 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Jetpack Compose
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.activity.compose)
-    implementation(libs.material3)
-    implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.material3)
+    implementation(libs.androidx.material3)
+    implementation(libs.androidx.material.icons.extended)
     implementation(libs.androidx.material3.adaptive.navigation.suite)
+    implementation("androidx.compose.runtime:runtime-livedata:1.7.8")
 
     // JSON serialization library, works with the Kotlin serialization plugin
     implementation(libs.kotlinx.serialization.json)
@@ -86,6 +84,9 @@ dependencies {
     implementation(libs.firebase.database.ktx)
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.firebase.analytics)
+    implementation(libs.firebase.firestore)
+    implementation(libs.firebase.messaging)
+    implementation(libs.firebase.functions)
 
     // Custom rich text editor
     //noinspection UseTomlInstead

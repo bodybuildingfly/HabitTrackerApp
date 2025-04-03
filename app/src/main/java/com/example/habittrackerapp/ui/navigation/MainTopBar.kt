@@ -5,11 +5,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Chat
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Menu
-import androidx.compose.material.icons.outlined.Feedback
-import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.filled.PeopleAlt
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -25,15 +24,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
+import com.example.habittrackerapp.components.MenuItem
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 internal fun MainTopBar(
     modifier: Modifier,
     title: String,
+    onProfile: () -> Unit,
+    onPartners: () -> Unit,
+    onSettings: () -> Unit,
     onLogout: () -> Unit,
     onChat: () -> Unit,
-    onNotification: () -> Unit
 ){
     TopAppBar(
         modifier = modifier,
@@ -49,74 +51,12 @@ internal fun MainTopBar(
             )
         },
         navigationIcon = {
-            // Remember the state of the dropdown menu
-            var expanded by remember { mutableStateOf(false) }
-
-            // Hamburger icon to show dropdown menu
-            IconButton(onClick = { expanded = !expanded }) {
-                Icon(Icons.Filled.Menu, contentDescription = "Menu")
-            }
-
-            // Dropdown menu
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false }
-            ) {
-                // Profile menu item
-                DropdownMenuItem(
-                    text = { Text("Profile") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Outlined.Person,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = { /* Do something... */ }
-                )
-                // Settings menu icon
-                DropdownMenuItem(
-                    text = { Text("Settings") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Outlined.Settings,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = { /* Do something... */ }
-                )
-
-                HorizontalDivider()
-
-                // Test notification menu item
-                DropdownMenuItem(
-                    text = { Text("Test Notification") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.Outlined.Feedback,
-                            contentDescription = null
-                        )
-                    },
-                    onClick = {
-                        onNotification()
-                    }
-                )
-
-                HorizontalDivider()
-
-                // Log out menu item
-                DropdownMenuItem(
-                    text = { Text("Log out") },
-                    leadingIcon = {
-                        Icon(
-                            Icons.AutoMirrored.Filled.ExitToApp,
-                            contentDescription = "Log out"
-                        )
-                    },
-                    onClick = {
-                        onLogout()
-                    }
-                )
-            }
+            HomeDropdownMenu(
+                onProfile = onProfile,
+                onPartners = onPartners,
+                onSettings = onSettings,
+                onLogout = onLogout
+            )
         },
 
         // Chat icon button on the right side
@@ -131,4 +71,27 @@ internal fun MainTopBar(
             }
         }
     )
+}
+
+
+@Composable
+fun HomeDropdownMenu(
+    onProfile: () -> Unit,
+    onPartners: () -> Unit,
+    onSettings: () -> Unit,
+    onLogout: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+
+    IconButton(onClick = { expanded = !expanded }) {
+        Icon(Icons.Filled.Menu, contentDescription = "Menu")
+    }
+
+    DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        MenuItem("Profile", Icons.Filled.Person, onProfile)
+        MenuItem("Partners", Icons.Filled.PeopleAlt, onPartners)
+        MenuItem("Settings", Icons.Outlined.Settings, onSettings)
+        HorizontalDivider()
+        MenuItem("Logout", Icons.AutoMirrored.Filled.ExitToApp, onLogout)
+    }
 }

@@ -1,7 +1,6 @@
 package com.example.habittrackerapp.ui.screen
 
 
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,32 +14,38 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.habittrackerapp.model.data.Habit
 import com.example.habittrackerapp.model.view.HabitViewModel
 
 @Composable
 fun HabitsList(
     modifier: Modifier = Modifier,
-    viewModel: HabitViewModel = viewModel(),
+    habitViewModel: HabitViewModel,
     onHabitClick: (String) -> Unit
 ) {
-    val habits by viewModel.habits
+    // Get the list of habits from the view model
+    val habits by habitViewModel.habits.observeAsState(emptyList())
 
-    Log.d("HabitsList", "Loading list of habits")
+    LaunchedEffect(Unit) {
+        habitViewModel.fetchHabits()
+    }
 
     LazyColumn(modifier = modifier.padding(vertical = 4.dp)) {
         items(habits) { habit ->
             Habit(
                 habit = habit,
-                onHabitClick = onHabitClick
+                onHabitClick = {
+                    onHabitClick(it)
+                }
             )
         }
     }

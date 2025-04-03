@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
-import com.example.habittrackerapp.util.FirebaseUtil
+import com.example.habittrackerapp.util.FirestoreUtil
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.BasicRichTextEditor
 
@@ -21,11 +21,11 @@ fun NotesPage(
     // Initialize the RichTextState
     val richTextState = rememberRichTextState()
 
-    // Read the HTML content from Firebase Realtime Database
-    FirebaseUtil.readData("notes/${tab}", {
-        richTextState.setHtml(it.child("data").value.toString())
-    }, {
-        Log.e("EditNotes", "Error reading data", it.toException())
+    // Read the HTML content from Firestore
+    FirestoreUtil.readData("notes", tab, { document ->
+        richTextState.setHtml(document.getString("data") ?: "")
+    }, { exception ->
+        Log.e("EditNotes", "Error reading data", exception)
     })
 
     BasicRichTextEditor(

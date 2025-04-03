@@ -1,6 +1,5 @@
 package com.example.habittrackerapp.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,10 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
@@ -20,11 +19,9 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -34,11 +31,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.neverEqualPolicy
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,31 +42,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.habittrackerapp.model.data.Habit
-import com.example.habittrackerapp.util.FirebaseUtil
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitEdit(
     modifier: Modifier,
-    habitId: String,
-    onClose: () -> Unit
+    habit: Habit,
+    onClose: () -> Unit,
+    onSave: (Habit) -> Unit
 ) {
-    val habit = remember { mutableStateOf(Habit(), neverEqualPolicy()) }
-    var isLoading by remember { mutableStateOf(true) }
 
-    // Load habit data once when habitId changes
-    LaunchedEffect(habitId) {
-        Log.d("HabitEdit", "Loading habit data for habitId: $habitId")
-        FirebaseUtil.readData("habits/$habitId",
-            onDataReceived = {
-                habit.value = it.getValue(Habit::class.java) ?: Habit()
-                isLoading = false
-            },
-            onFailure = {
-                Log.e("HabitEdit", "Error reading data", it.toException())
-            }
-        )
-    }
+    var habit by remember { mutableStateOf(habit) }
 
     Scaffold(
         topBar = {
@@ -82,7 +63,6 @@ fun HabitEdit(
                     }
                 },
                 title = { /* No title needed */ },
-                // Chat icon button on the right side
                 actions = {
                     IconButton(onClick = {
                         onClose()
@@ -96,74 +76,55 @@ fun HabitEdit(
             )
         }
     ) { paddingValues ->
-        if (isLoading) {
-            // Show loading indicator
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
-        } else {
-            Column(
-                modifier = modifier
-                    .padding(horizontal = 24.dp)
-                    .padding(paddingValues)
-            ) {
+        Column(
+            modifier = modifier
+                .padding(horizontal = 24.dp)
+                .padding(paddingValues)
+        ) {
 
-                // Section 1 - Name and description
-                Section1(
-                    name = habit.value.name,
-                    description = habit.value.description,
-                    onNameChange = {
-                        habit.value = habit.value.copy(name = it)
-                    },
-                    onDescriptionChange = {
-                        habit.value = habit.value.copy(description = it)
-                    }
-                )
-                Spacer(modifier = Modifier.padding(16.dp))
+            // Section 1 - Name and description
+            Section1(
+                name = habit.name,
+                description = habit.description,
+                onNameChange = {
+                    habit = habit.copy(name = it)
+                },
+                onDescriptionChange = {
+                    habit = habit.copy(description = it)
+                }
+            )
+            Spacer(modifier = Modifier.padding(16.dp))
 
-                // Section 2 - Times to complete
-                Section2(
-                    timesToComplete = habit.value.timesToComplete,
-                    onTimesToCompleteChange = {
-                        habit.value = habit.value.copy(timesToComplete = it)
-                    }
-                )
-                Spacer(modifier = Modifier.padding(16.dp))
+            // Section 2 - Times to complete
+            Section2(
+                timesToComplete = habit.timesToComplete,
+                onTimesToCompleteChange = {
+                    habit = habit.copy(timesToComplete = it)
+                }
+            )
+            Spacer(modifier = Modifier.padding(16.dp))
 
-                // Section 3 - Frequency
-                Section3(
-                    frequency = habit.value.frequency,
-                    daysOfWeek = habit.value.daysOfWeek,
-                    onFrequencyChange = {
-                        habit.value = habit.value.copy(frequency = it)
-                    },
-                    onDaysOfWeekChange = {
-                        habit.value = habit.value.copy(daysOfWeek = it)
-                    }
-                )
-                Spacer(modifier = Modifier.padding(16.dp))
+            // Section 3 - Frequency
+            Section3(
+                frequency = habit.frequency,
+                daysOfWeek = habit.daysOfWeek,
+                dayOfMonth = habit.dayOfMonth,
+                onFrequencyChange = {
+                    habit = habit.copy(frequency = it)
+                },
+                onDaysOfWeekChange = {
+                    habit = habit.copy(daysOfWeek = it)
+                },
+                onDayOfMonthChange = {
+                    habit = habit.copy(dayOfMonth = it)
+                }
+            )
+            Spacer(modifier = Modifier.padding(16.dp))
 
-                // Bottom save button
-                Button(
-                    modifier = modifier,
-                    onClick = {
-                        // Save habit data to Firebase
-                        FirebaseUtil.writeData(
-                            "habits/${habitId}", habit.value, onSuccess = {
-                                onClose()
-                            }, onFailure = {
-                                Log.e("HabitEdit", "Error writing data", it)
-                            }
-                        )
-                    },
-                    content = {
-                        Text(text = "Save")
-                    }
-                )
-            }
+            // Bottom save button
+            SaveButton(
+                onSave = { onSave(habit) }
+            )
         }
     }
 }
@@ -278,21 +239,20 @@ fun Section2(
 fun Section3(
     frequency: Int,
     daysOfWeek: String,
+    dayOfMonth: Int,
     onFrequencyChange: (Int) -> Unit,
-    onDaysOfWeekChange: (String) -> Unit
+    onDaysOfWeekChange: (String) -> Unit,
+    onDayOfMonthChange: (Int) -> Unit
 ) {
-    val isDropDownExpanded = remember { mutableStateOf(false) }
-    val itemPosition = remember { mutableIntStateOf(frequency) }
+    val isFrequencyDropDownExpanded = remember { mutableStateOf(false) }
+    val frequencyPosition = remember { mutableIntStateOf(frequency) }
     val frequencyOptions = listOf("Once", "Daily", "On selected weekdays", "Weekly", "Monthly")
+
     var daysOfWeek by remember { mutableStateOf(daysOfWeek) }
 
-    // Toggle day in daysOfWeek
-    fun toggleDay(index: Int) {
-        daysOfWeek = daysOfWeek.toMutableList().apply {
-            this[index] = if (this[index] == '1') '0' else '1'
-        }.joinToString("")
-        Log.d("Section3", "New daysOfWeek: $daysOfWeek")
-    }
+    val isDayOfMonthDropDownExpanded = remember { mutableStateOf(false) }
+    val dayOfMonthPosition = remember { mutableIntStateOf(dayOfMonth) }
+    val daysOfMonthOptions = listOf("On the first of the month", "On the 15th of the month")
 
     Text(
         style = MaterialTheme.typography.titleMedium,
@@ -307,10 +267,10 @@ fun Section3(
             modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    isDropDownExpanded.value = true
+                    isFrequencyDropDownExpanded.value = true
                 }
         ) {
-            Text(text = frequencyOptions[itemPosition.intValue])
+            Text(text = frequencyOptions[frequencyPosition.intValue])
             Icon(
                 modifier = Modifier.padding(horizontal = 8.dp),
                 imageVector = Icons.Filled.ArrowDropDown,
@@ -318,9 +278,9 @@ fun Section3(
             )
         }
         DropdownMenu(
-            expanded = isDropDownExpanded.value,
+            expanded = isFrequencyDropDownExpanded.value,
             onDismissRequest = {
-                isDropDownExpanded.value = false
+                isFrequencyDropDownExpanded.value = false
             }) {
             frequencyOptions.forEachIndexed { index, option ->
                 DropdownMenuItem(
@@ -328,25 +288,97 @@ fun Section3(
                         Text(text = option)
                     },
                     onClick = {
-                        isDropDownExpanded.value = false
-                        itemPosition.intValue = index
+                        isFrequencyDropDownExpanded.value = false
+                        frequencyPosition.intValue = index
+                        onFrequencyChange(index)
                     })
             }
         }
     }
+    Spacer(modifier = Modifier.padding(8.dp))
+
+    // Show additional content based on the selected option
+    if (frequencyPosition.intValue == 3) {
+        Text(
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            text = "By which day of the week is this habit due?"
+        )
+    }
+
+    // Show DayOfWeekSelector when frequency option is selected
+    if (frequencyPosition.intValue == 2 || frequencyPosition.intValue == 3) {
+        DayOfWeekSelector(
+            daysOfWeek = daysOfWeek,
+            singleDaySelectable = frequencyPosition.intValue == 3,
+            onDaysOfWeekChange = {
+                onDaysOfWeekChange(it)
+            }
+        )
+    }
+
+    // Show DayOfMonthSelector when frequency option is selected
+    if (frequencyPosition.intValue == 4) {
+        Box {
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        isDayOfMonthDropDownExpanded.value = true
+                    }
+            ) {
+                Text(text = daysOfMonthOptions[dayOfMonthPosition.intValue])
+                Icon(
+                    modifier = Modifier.padding(horizontal = 8.dp),
+                    imageVector = Icons.Filled.ArrowDropDown,
+                    contentDescription = "DropDown Icon"
+                )
+            }
+            DropdownMenu(
+                expanded = isDayOfMonthDropDownExpanded.value,
+                onDismissRequest = {
+                    isDayOfMonthDropDownExpanded.value = false
+                }) {
+                daysOfMonthOptions.forEachIndexed { index, option ->
+                    DropdownMenuItem(
+                        text = {
+                            Text(text = option)
+                        },
+                        onClick = {
+                            isDayOfMonthDropDownExpanded.value = false
+                            dayOfMonthPosition.intValue = index
+                            onDayOfMonthChange(index)
+                        })
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun DayOfWeekSelector(
+    daysOfWeek: String,
+    singleDaySelectable: Boolean = false,
+    onDaysOfWeekChange: (String) -> Unit
+) {
+    var daysOfWeek by remember { mutableStateOf(daysOfWeek) }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 16.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        DayOfWeekIcon( enabled = daysOfWeek[0] == '1', text = "S", onClick = { toggleDay(0)})
-        DayOfWeekIcon( enabled = daysOfWeek[1] == '1', text = "M", onClick = { toggleDay(1)})
-        DayOfWeekIcon( enabled = daysOfWeek[2] == '1', text = "T", onClick = { toggleDay(2)})
-        DayOfWeekIcon( enabled = daysOfWeek[3] == '1', text = "W", onClick = { toggleDay(3)})
-        DayOfWeekIcon( enabled = daysOfWeek[4] == '1', text = "T", onClick = { toggleDay(4)})
-        DayOfWeekIcon( enabled = daysOfWeek[5] == '1', text = "F", onClick = { toggleDay(5)})
-        DayOfWeekIcon( enabled = daysOfWeek[6] == '1', text = "S", onClick = { toggleDay(6)})
+        val days = listOf("S", "M", "T", "W", "T", "F", "S")
+        days.forEachIndexed { index, day ->
+            DayOfWeekIcon(
+                enabled = daysOfWeek[index] == '1',
+                text = day,
+                onClick = { daysOfWeek = toggleDay(daysOfWeek, index, singleDaySelectable, onDaysOfWeekChange) }
+            )
+        }
     }
 }
 
@@ -356,13 +388,11 @@ fun DayOfWeekIcon(
     text: String = "",
     onClick: () -> Unit
 ) {
-    var enabled by remember { mutableStateOf(enabled) }
 
     Surface(
         modifier = Modifier,
         shape = CircleShape,
         onClick = {
-            enabled = !enabled
             onClick()
         }
     ) {
@@ -382,5 +412,55 @@ fun DayOfWeekIcon(
                 style = MaterialTheme.typography.bodyMedium
             )
         }
+    }
+}
+
+fun toggleDay(
+    daysOfWeek: String,
+    index: Int,
+    singleDaySelectable: Boolean,
+    onDaysOfWeekChange: (String) -> Unit
+): String {
+    val updatedDays = daysOfWeek.toMutableList().apply {
+        if (singleDaySelectable) {
+            // Only allow one day to be selected
+            this.forEachIndexed { i, day ->
+                if (i != index) {
+                    this[i] = '0'
+                } else {
+                    this[i] = if (this[i] == '1') '0' else '1'
+                }
+            }
+        } else {
+            // Toggle the selected day
+            this[index] = if (this[index] == '1') '0' else '1'
+            if (this.joinToString("") == "0000000") {
+                this[index] = '1' // Prevent deselecting all days
+            }
+        }
+    }.joinToString("")
+
+    onDaysOfWeekChange(updatedDays)
+    return updatedDays
+}
+
+@Composable
+fun SaveButton(
+    modifier: Modifier = Modifier,
+    onSave: () -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(bottom = 24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Bottom
+    ) {
+        Button(
+            modifier = modifier
+                .width(120.dp),
+            onClick = { onSave() },
+            content = { Text(text = "Save") }
+        )
     }
 }

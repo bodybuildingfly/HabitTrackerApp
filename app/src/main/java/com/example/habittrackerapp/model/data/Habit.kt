@@ -6,12 +6,13 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class Habit(
     var id: String = "",
-    val name: String = "",
-    val description: String = "",
-    val frequency: Int = 0,
-    val daysOfWeek: String = "0000000",
-    val dayOfMonth: Int = 0,
-    val timesToComplete: Int = 0,
-    val timesCompleted: Int = 0,
-    val nextDueDate: String? = null
+    var name: String = "",
+    var description: String = "",
+    var frequency: Int = 0,
+    var daysOfWeek: String = "0000000",
+    var dayOfMonth: Int = 0,
+    var timesToComplete: Int = 0,
+    var timesCompleted: Int = 0,
+    var nextDueDate: String? = null,
+    var stability: Int = 0 // Not sure what this is, but the db appears to have created it
 ) : Parcelable
