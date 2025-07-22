@@ -57,11 +57,16 @@ fun HabitDetails(
 ) {
     var habit by remember { mutableStateOf(habit) }
     var counter by remember { mutableIntStateOf(0) }
+    var isLoading by remember { mutableStateOf(true) }
 
     // Update counter in database when it changes
     LaunchedEffect(counter) {
-        delay(1000) // Delay to avoid updating too frequently
-        onCounterChange(counter)
+        if (!isLoading) {
+            delay(1000) // Delay to avoid updating too frequently
+            onCounterChange(counter)
+        } else {
+            isLoading = false
+        }
     }
 
     Scaffold(

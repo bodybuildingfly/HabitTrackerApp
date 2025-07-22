@@ -96,22 +96,16 @@ val homeScreens = listOf(
     HomeScreen(
         icon = Icons.Filled.Home,
         route = "Habits",
-        screen = { HabitsList(
-            onHabitClick = {},
-            habitViewModel = viewModel()
-        )},
         badgeAmount = null
     ),
     HomeScreen(
         icon = Icons.AutoMirrored.Filled.MenuBook,
         route = "Journal",
-        screen = { JournalList() },
         badgeAmount = null
     ),
     HomeScreen(
         icon = Icons.Filled.NoteAlt,
         route = "Notes",
-        screen = { NotesScreen(callback = {}) },
         badgeAmount = null
     )
 )

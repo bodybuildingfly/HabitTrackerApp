@@ -3,34 +3,37 @@ package com.example.habittrackerapp.ui.screen
 import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.habittrackerapp.model.data.Habit
+import com.example.habittrackerapp.model.view.AppViewModel
 import com.example.habittrackerapp.model.view.HabitViewModel
-import com.example.habittrackerapp.util.FirebaseUtil
 
 @Composable
 fun AppScreen(
     clickAction: String?
 ) {
     val mainNavController = rememberNavController()
-
+    val appViewModel = remember { AppViewModel() }
+    val appUIState = appViewModel.uiState.collectAsState()
     val habitViewModel = remember { HabitViewModel() }
+
 
     // If click_action is provided, navigate to the corresponding screen
     LaunchedEffect(clickAction) {
-        Log.d("AppScreen", "Recomposing with clickAction: $clickAction")
-        if (clickAction != null) {
+        if (clickAction != null && appUIState.value.loggedIn) {
+            Log.d("AppScreen", "Recomposing with clickAction: $clickAction")
             mainNavController.navigate(clickAction)
         }
     }
 
     NavHost(
         navController = mainNavController,
-        startDestination = if (FirebaseUtil.isLoggedIn()) "Home" else "Login"
+        startDestination = if (appUIState.value.loggedIn) "Home" else "Login"
     ) {
         composable("Login") {
             LoginScreen(
@@ -42,12 +45,14 @@ fun AppScreen(
         composable("Home") {
             HomeScreen(
                 mainNavController = mainNavController,
-                habitViewModel = habitViewModel
+                appViewModel = appViewModel,
+                habitViewModel = habitViewModel,
             )
         }
         composable("Home/{page}") {
             HomeScreen(
                 mainNavController = mainNavController,
+                appViewModel = appViewModel,
                 habitViewModel = habitViewModel,
                 page = it.arguments?.getString("page") ?: ""
             )
@@ -55,6 +60,7 @@ fun AppScreen(
         composable("Home/{page}/{tab}") {
             HomeScreen(
                 mainNavController = mainNavController,
+                appViewModel = appViewModel,
                 habitViewModel = habitViewModel,
                 page = it.arguments?.getString("page") ?: "",
                 tab = it.arguments?.getString("tab") ?: ""
@@ -65,9 +71,14 @@ fun AppScreen(
                 onClose = mainNavController::popBackStack
             )
         }
-        composable("EditNotes/{tab}") { backStackEntry ->
-            EditNotes(
-                tab = backStackEntry.arguments?.getString("tab") ?: "",
+        composable("NotesEdit") { backStackEntry ->
+            NotesEdit(
+                appViewModel = appViewModel,
+                onSave = { content ->
+                    appViewModel.updateNotes(content, onClose = {
+                        mainNavController.popBackStack()
+                    })
+                },
                 onClose = {
                     mainNavController.popBackStack()
                 }
@@ -89,6 +100,17 @@ fun AppScreen(
                 onDelete = { /* Handle delete */ }
             )
         }
+        composable("HabitEdit") {
+            HabitEdit(
+                modifier = Modifier,
+                habit = Habit(),
+                onClose = { mainNavController.popBackStack() },
+                onSave = {
+                    habitViewModel.addHabit(it)
+                    mainNavController.popBackStack()
+                }
+            )
+        }
         composable("HabitEdit/{habitId}") { backStackEntry ->
             val habitId = backStackEntry.arguments?.getString("habitId") ?: ""
             HabitEdit(
@@ -102,7 +124,14 @@ fun AppScreen(
             )
         }
         composable("Profile") {
-//                    ProfileScreen()
+            Profile(
+                appViewModel = appViewModel,
+                onSave = {
+                    appViewModel.updateUserData("userName", it)
+                    mainNavController.popBackStack()
+                },
+                onClose = mainNavController::popBackStack
+            )
         }
         composable("Partners") {
 //                    PartnersScreen()

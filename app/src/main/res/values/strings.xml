@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">HabitTrackerApp</string>
+    <string name="notification_channel_id">fcm_channel_id</string>
+    <string name="notification_channel_name">Firebase Cloud Messaging</string>
+    <string name="notification_channel_description">Channel for Firebase Cloud Messaging notifications</string>
 </resources>

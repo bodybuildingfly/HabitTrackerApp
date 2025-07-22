@@ -1,12 +1,7 @@
 package com.example.habittrackerapp.util
 
-import android.Manifest
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
-import android.os.Build
-import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -20,72 +15,39 @@ import androidx.core.content.ContextCompat
 object PermissionUtil {
 
     @Composable
-    fun NotificationPermissionRequest(
-        context: Context
+    fun RequestPermission(
+        context: Context,
+        permission: String,
+        onPermissionGranted: () -> Unit,
+        onPermissionDenied: () -> Unit
     ) {
-        // Create a notification channel
-        createNotificationChannel(context)
-
-        // Check if the notification permission is granted
+        // Check if the user has already granted the permission
         var hasPermission by remember {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                mutableStateOf(
-                    ContextCompat.checkSelfPermission(
-                        context,
-                        Manifest.permission.POST_NOTIFICATIONS
-                    ) == PackageManager.PERMISSION_GRANTED
-                )
-            } else {
-                mutableStateOf(true)
-            }
+            mutableStateOf(
+                ContextCompat.checkSelfPermission(
+                    context,
+                    permission
+                ) == PackageManager.PERMISSION_GRANTED
+            )
         }
 
-        // Request the notification permission
+        // Request the permission if not already granted
         val requestPermissionLauncher = rememberLauncherForActivityResult(
             contract = ActivityResultContracts.RequestPermission()
         ) { isGranted: Boolean ->
             hasPermission = isGranted
             if (isGranted) {
-                FirebaseUtil.listenForUpdates(
-                    listOf("notes/rules", "notes/limits", "notes/ideas", "notes/notes")
-                ) { path, _ ->
-                    val updatesPath = path.removePrefix("notes/").replaceFirstChar { it.uppercase() }
-                    NotificationUtil.showNotification(context, "$updatesPath Updated", "$updatesPath has been updated")
-                }
+                onPermissionGranted()
             } else {
-                // Handle the case when the user denies the permission
+                onPermissionDenied()
             }
         }
 
         // Launch the permission request when needed
         LaunchedEffect(key1 = hasPermission) {
-            if (!hasPermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            } else if (hasPermission) {
-                FirebaseUtil.listenForUpdates(
-                    listOf("notes/rules", "notes/limits", "notes/ideas", "notes/notes")
-                ) { path, _ ->
-                    val updatesPath = path.removePrefix("notes/").replaceFirstChar { it.uppercase() }
-                    NotificationUtil.showNotification(context, "$updatesPath Updated", "$updatesPath has been updated")
-                }
+            if (!hasPermission) {
+                requestPermissionLauncher.launch(permission)
             }
         }
-    }
-
-    fun createNotificationChannel(context: Context) {
-        val channelId = "firebase_changes"
-        val channelName = "Data Change Alerts"
-        val channelDescription = "Notifies when Firebase data changes"
-        val importance = NotificationManager.IMPORTANCE_HIGH
-
-        val channel = NotificationChannel(channelId, channelName, importance).apply {
-            description = channelDescription
-        }
-
-        val notificationManager =
-            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.createNotificationChannel(channel)
-
-        Log.d("Notification", "Notification channel created")
     }
 }

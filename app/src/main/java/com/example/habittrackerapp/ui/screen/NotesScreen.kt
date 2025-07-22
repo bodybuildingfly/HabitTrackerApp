@@ -1,6 +1,5 @@
 package com.example.habittrackerapp.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -30,14 +29,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.habittrackerapp.model.view.AppViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotesScreen(
-    tab: String = "",
-    callback: (String) -> Unit
+    appViewModel: AppViewModel,
+    onEdit: (String) -> Unit
 ) {
-
     // Create the top row of buttons
     var pagesList = listOf<String>("RULES", "LIMITS", "IDEAS", "NOTES")
 
@@ -48,25 +47,11 @@ fun NotesScreen(
     var selectedTab by remember { mutableIntStateOf(pagerState.currentPage) }
 
     // Scroll state for the screen
-    val scrollState = rememberScrollState()
+    val scrollState = rememberScrollState(0)
 
     // Listen for changes in the selected tab
     LaunchedEffect(selectedTab) {
         pagerState.scrollToPage(selectedTab)
-    }
-
-    // Listen for changes in the current page
-    LaunchedEffect(pagerState.currentPage) {
-        selectedTab = pagerState.currentPage
-    }
-
-    LaunchedEffect(Unit) {
-        scrollState.scrollTo(0) // Ensures that the screen starts at the top
-    }
-
-    if (tab.isNotEmpty()) {
-        Log.d("NotesScreen", "Tab argument received: $tab")
-        selectedTab = pagesList.indexOf(tab.uppercase())
     }
 
     Scaffold(
@@ -81,7 +66,10 @@ fun NotesScreen(
                 for (index in pagesList.indices) {
                     Tab(
                         selected = index == selectedTab,
-                        onClick = { selectedTab = index }
+                        onClick = {
+                            selectedTab = index
+                            appViewModel.setActiveTab(pagesList[index].lowercase())
+                        }
                     ) {
                         Text(
                             text = pagesList[index],
@@ -95,8 +83,8 @@ fun NotesScreen(
             FloatingActionButton(
                 containerColor = MaterialTheme.colorScheme.secondary,
                 onClick = {
-                    // Pass the tab argument to the EditNotes composable
-                    callback(pagesList[selectedTab].lowercase())
+                    // Pass the tab argument to the NotesEdit composable
+                    onEdit(pagesList[selectedTab].lowercase())
                 },
                 modifier = Modifier.padding(horizontal = 8.dp),
                 shape = CircleShape
@@ -119,7 +107,7 @@ fun NotesScreen(
                 verticalAlignment = Alignment.Top
             ) { currentPage ->
                 NotesPage(
-                    tab = pagesList[currentPage].lowercase()
+                    appViewModel = appViewModel
                 )
             }
         }

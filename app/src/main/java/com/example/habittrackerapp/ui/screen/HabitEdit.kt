@@ -10,15 +10,15 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -42,6 +42,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.example.habittrackerapp.model.data.Habit
+import com.example.habittrackerapp.ui.navigation.SaveButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -53,6 +54,8 @@ fun HabitEdit(
 ) {
 
     var habit by remember { mutableStateOf(habit) }
+
+    val scrollState = rememberScrollState()
 
     Scaffold(
         topBar = {
@@ -80,6 +83,7 @@ fun HabitEdit(
             modifier = modifier
                 .padding(horizontal = 24.dp)
                 .padding(paddingValues)
+                .verticalScroll(scrollState)
         ) {
 
             // Section 1 - Name and description
@@ -246,7 +250,7 @@ fun Section3(
 ) {
     val isFrequencyDropDownExpanded = remember { mutableStateOf(false) }
     val frequencyPosition = remember { mutableIntStateOf(frequency) }
-    val frequencyOptions = listOf("Once", "Daily", "On selected weekdays", "Weekly", "Monthly")
+    val frequencyOptions = listOf("Daily", "On selected weekdays", "Weekly", "Monthly")
 
     var daysOfWeek by remember { mutableStateOf(daysOfWeek) }
 
@@ -298,7 +302,7 @@ fun Section3(
     Spacer(modifier = Modifier.padding(8.dp))
 
     // Show additional content based on the selected option
-    if (frequencyPosition.intValue == 3) {
+    if (frequencyPosition.intValue == 2) {
         Text(
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
@@ -307,10 +311,10 @@ fun Section3(
     }
 
     // Show DayOfWeekSelector when frequency option is selected
-    if (frequencyPosition.intValue == 2 || frequencyPosition.intValue == 3) {
+    if (frequencyPosition.intValue == 1 || frequencyPosition.intValue == 2) {
         DayOfWeekSelector(
             daysOfWeek = daysOfWeek,
-            singleDaySelectable = frequencyPosition.intValue == 3,
+            singleDaySelectable = frequencyPosition.intValue == 2,
             onDaysOfWeekChange = {
                 onDaysOfWeekChange(it)
             }
@@ -318,7 +322,7 @@ fun Section3(
     }
 
     // Show DayOfMonthSelector when frequency option is selected
-    if (frequencyPosition.intValue == 4) {
+    if (frequencyPosition.intValue == 3) {
         Box {
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
@@ -350,7 +354,8 @@ fun Section3(
                             isDayOfMonthDropDownExpanded.value = false
                             dayOfMonthPosition.intValue = index
                             onDayOfMonthChange(index)
-                        })
+                        }
+                    )
                 }
             }
         }
@@ -442,25 +447,4 @@ fun toggleDay(
 
     onDaysOfWeekChange(updatedDays)
     return updatedDays
-}
-
-@Composable
-fun SaveButton(
-    modifier: Modifier = Modifier,
-    onSave: () -> Unit,
-) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(bottom = 24.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Bottom
-    ) {
-        Button(
-            modifier = modifier
-                .width(120.dp),
-            onClick = { onSave() },
-            content = { Text(text = "Save") }
-        )
-    }
 }

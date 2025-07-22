@@ -13,6 +13,6 @@ data class Habit(
     var dayOfMonth: Int = 0,
     var timesToComplete: Int = 0,
     var timesCompleted: Int = 0,
-    var nextDueDate: String? = null,
+    var nextDueDate: Long = 0,
     var stability: Int = 0 // Not sure what this is, but the db appears to have created it
 ) : Parcelable

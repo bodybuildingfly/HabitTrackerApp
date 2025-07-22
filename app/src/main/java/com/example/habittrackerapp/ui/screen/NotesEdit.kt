@@ -1,6 +1,5 @@
 package com.example.habittrackerapp.ui.screen
 
-import android.util.Log
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,28 +20,36 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.example.habittrackerapp.components.RichTextStyleRow
-import com.example.habittrackerapp.util.FirestoreUtil
+import com.example.habittrackerapp.model.view.AppViewModel
 import com.mohamedrejeb.richeditor.model.rememberRichTextState
 import com.mohamedrejeb.richeditor.ui.material3.OutlinedRichTextEditor
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun EditNotes(
-    tab: String,
+fun NotesEdit(
+    appViewModel: AppViewModel,
+    onSave: (String) -> Unit,
     onClose: () -> Unit
 ) {
 
     val outlinedRichTextState = rememberRichTextState()
+    val tab = appViewModel.activeNotesTab.value ?: "rules"
     val tabTitle = tab.replaceFirstChar { it.uppercase() }
 
-    FirestoreUtil.readData("notes", tab, { document ->
-        outlinedRichTextState.setHtml(document.getString("data") ?: "")
-    }, { exception ->
-        Log.e("EditNotes", "Error reading data", exception)
-    })
+    // Fetch the string content from the ViewModel
+    LaunchedEffect(Unit) {
+        when (tab) {
+            "rules" -> outlinedRichTextState.setHtml(appViewModel.rules.value.toString())
+            "limits" -> outlinedRichTextState.setHtml(appViewModel.limits.value.toString())
+            "ideas" -> outlinedRichTextState.setHtml(appViewModel.ideas.value.toString())
+            "notes" -> outlinedRichTextState.setHtml(appViewModel.notes.value.toString())
+            else -> outlinedRichTextState.setHtml("")
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -59,13 +66,7 @@ fun EditNotes(
                     )
                 },
                 actions = {
-                    IconButton(onClick = {
-                        FirestoreUtil.writeDataWithTransaction("notes", tab, outlinedRichTextState.toHtml(), {
-                            onClose()
-                        }, {
-                            Log.e("EditNotes", "Error writing data", it)
-                        })
-                    }) {
+                    IconButton(onClick = { onSave(outlinedRichTextState.toHtml())}) {
                         Icon(
                             Icons.Outlined.Save,
                             contentDescription = "Save"

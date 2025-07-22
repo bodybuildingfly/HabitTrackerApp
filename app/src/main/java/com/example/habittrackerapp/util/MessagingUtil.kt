@@ -43,7 +43,7 @@ class MessagingUtil : FirebaseMessagingService() {
                 this, notificationId, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val notification = NotificationCompat.Builder(this, "my_channel_id")
+            val notification = NotificationCompat.Builder(this, "@string/notification_channel_id")
                 .setSmallIcon(R.drawable.ic_launcher_foreground)
                 .setContentTitle(remoteMessage.notification?.title)
                 .setContentText(remoteMessage.notification?.body)
@@ -56,7 +56,7 @@ class MessagingUtil : FirebaseMessagingService() {
     }
 
     private fun showNotification(title: String?, message: String?) {
-        val channelId = "my_channel_id"
+        val channelId = "@string/notification_channel_id"
         createNotificationChannel(channelId) // Create the channel if needed
 
         // Intent to open MainActivity when the notification is tapped
@@ -85,7 +85,7 @@ class MessagingUtil : FirebaseMessagingService() {
         val channel = NotificationChannel(
             channelId, "Messages", NotificationManager.IMPORTANCE_HIGH
         ).apply {
-            description = "Notifications for new messages"
+            description = "Notifications for FCM messages"
         }
         val manager = getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(channel)

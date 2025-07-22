@@ -1,13 +1,12 @@
 package com.example.habittrackerapp.util
 
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.util.Log
-import com.example.habittrackerapp.model.data.Habit
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.DataSnapshot
-import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
-import com.google.firebase.database.ValueEventListener
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import com.google.firebase.messaging.FirebaseMessaging
@@ -53,122 +52,6 @@ object FirebaseUtil {
         auth.signOut()
     }
 
-    /**
-     * Write data to a specific path in the database
-     */
-    fun writeData(path: String, data: Any, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
-        getDatabaseRef(path).setValue(data)
-            .addOnSuccessListener { onSuccess() }
-            .addOnFailureListener { onFailure(it) }
-    }
-
-    /**
-     * Read data from a specific path in the database
-     */
-    fun readData(path: String, onDataReceived: (DataSnapshot) -> Unit, onFailure: (DatabaseError) -> Unit) {
-        getDatabaseRef(path).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                onDataReceived(snapshot)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                onFailure(error)
-            }
-        })
-    }
-
-    /**
-     * Listen for real-time updates at multiple paths
-     */
-    fun listenForUpdates(paths: List<String>, onDataChanged: (String, DataSnapshot) -> Unit) {
-        val currentUserId = FirebaseAuth.getInstance().currentUser?.uid
-
-        paths.forEach { path ->
-            val ref = getDatabaseRef(path)
-            var isInitialLoad = true // Flag to track first-time load for each path
-
-            ref.addValueEventListener(object : ValueEventListener {
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    if (isInitialLoad) {
-                        isInitialLoad = false
-                        return // Skip initial load
-                    }
-
-                    // Extract the 'updatedBy' field to check who made the change
-                    val updatedBy = snapshot.child("updatedBy").getValue(String::class.java)
-
-                    // Ignore notifications if the update was made by the current user
-                    if (updatedBy == currentUserId) {
-                        return
-                    }
-
-                    // Pass the path along with the snapshot
-                    onDataChanged(path, snapshot)
-                }
-
-                override fun onCancelled(error: DatabaseError) {
-                    // Handle error (consider logging per path)
-                }
-            })
-        }
-    }
-
-    // Function to fetch habits
-    fun getHabits(onDataReceived: (List<Habit>) -> Unit) {
-        database.getReference("habits").addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val habits = snapshot.children.mapNotNull { it.getValue(Habit::class.java) }
-                // Add id to each habit using the key of the snapshot
-                habits.forEachIndexed { index, habit ->
-                    habit.id = snapshot.children.elementAt(index).key ?: ""
-                }
-                // Return the list of habits
-                onDataReceived(habits)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("FirebaseUtil", "Error fetching habits", error.toException())
-            }
-        })
-    }
-
-    // Function to fetch a single habit by ID
-    fun getHabitById(
-        habitId: String,
-        onDataReceived: (Habit) -> Unit
-    ) {
-        database.getReference("habits").child(habitId).addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val habit = snapshot.getValue(Habit::class.java)
-                habit?.let { onDataReceived(it) }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("FirebaseUtil", "Error fetching habit with id $habitId - ", error.toException())
-            }
-        })
-    }
-
-    // Function to add a new habit
-    fun addHabit(habit: Habit, onComplete: (Boolean) -> Unit) {
-        val habitId = database.getReference("habits").push().key ?: ""
-        val habitWithId = habit.copy(id = habitId)
-        database.getReference("habits").child(habitId).setValue(habitWithId)
-            .addOnCompleteListener { task -> onComplete(task.isSuccessful) }
-    }
-
-    // Function to delete a habit
-    fun deleteHabit(habitId: String, onComplete: (Boolean) -> Unit) {
-        database.getReference("habits").child(habitId).removeValue()
-            .addOnCompleteListener { task -> onComplete(task.isSuccessful) }
-    }
-
-    // Function to update a habit's counter
-    fun updateHabitCounter(habitId: String, counter: Int, onComplete: (Boolean) -> Unit) {
-        database.getReference("habits").child(habitId).child("timesCompleted").setValue(counter)
-            .addOnCompleteListener { task -> onComplete(task.isSuccessful) }
-    }
-
     // Function to get the FCM token and save it to Firebase
     fun getFCMToken() {
         FirebaseMessaging.getInstance().token
@@ -201,6 +84,23 @@ object FirebaseUtil {
                     Log.e("FirestoreUtil", "Error saving token", e)
                 }
         }
+    }
+
+    fun createNotificationChannel(context: Context) {
+        val channelId = "@string/default_notification_channel_id"
+        val channelName = "@string/default_notification_channel_name"
+        val channelDescription = "@string/default_notification_channel_description"
+        val importance = NotificationManager.IMPORTANCE_HIGH
+
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDescription
+        }
+
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+
+        Log.d("Notification", "Notification channel created")
     }
 }
 
